@@ -1,0 +1,32 @@
+- name: ensure apache is installed
+  apt: pkg=apache2 update_cache=yes state=installed 
+
+- name: copy config {{apache_config_file}}
+  template: src={{ apache_config_file }}.j2 dest=/etc/apache2/apache2.conf backup=yes
+  notify: Restart Apache
+  when: update_apache_conf == "True" 
+
+- name: ensure apache is running
+  service: name=apache2 state=started
+
+- name: install module apache 
+  command: a2enmod {{item}}  creates="/etc/apache2/mods-enabled/{{item}}.load"
+  with_items: mods_list
+  notify: Restart Apache
+  when: mods_list is defined
+
+- name: enable mod_status
+  apache2_module: state=present name=status
+  when: apache_mod_status == 'True' 
+
+- name: copy template of mod_status 
+  template: src=status.conf dest=/etc/apache2/mods-available/status.conf
+  notify: Restart Apache
+  when: apache_mod_status == 'True'
+
+- name: copy template of logrotate
+  template: src=logrotate_apache2.j2 dest=/etc/logrotate.d/{{apache_server_name}}
+  when: apache_server_name is defined
+
+- name: Create directory for logs
+  file: path={{deploy_path}}/logs/apache2 state=directory mode=755 owner='www-data'

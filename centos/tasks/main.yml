@@ -1,0 +1,91 @@
+- name: ensure apache is installed
+  yum: pkg=httpd state=installed
+  register: apache_install
+
+- name: create {{item}} directory for Apache vhosts
+  file: path={{item}} state=directory
+  with_items:
+     - "/etc/httpd/sites-enabled"
+     - "/etc/httpd/sites-available"
+
+- name: copy Apache service configuration template (CentOS 6)
+  template: src="{{item}}.j2" dest="/etc/sysconfig/{{item}}"
+  with_items:
+     - httpd
+  register: apache_conf
+  notify: Restart Apache
+  when: ansible_distribution_major_version == "6" and (update_apache_conf is not defined or update_apache_conf == "True")
+
+- name: copy Apache configuration template (CentOS 6)
+  template: src="{{item}}.j2" dest="/etc/httpd/conf/{{item}}"
+  with_items:
+     - httpd.conf
+  register: apache_conf
+  when: ansible_distribution_major_version == "6" and (update_apache_conf is not defined or update_apache_conf == "True")
+  notify: Restart Apache
+
+- name: copy Apache configuration template (CentOS 7)
+  template: src="httpd_centos7.conf.j2" dest="/etc/httpd/conf/httpd.conf"
+  register: apache_conf
+  when: ansible_distribution_major_version == "7" and (update_apache_conf is not defined or update_apache_conf == "True")
+  notify: Restart Apache
+
+- name: copy httpd default vhost
+  template: src=default.j2 dest=/etc/httpd/sites-available/default
+
+- name: activated default vhost
+  file: src=/etc/httpd/sites-available/default dest=/etc/httpd/sites-enabled/default state=link
+  register: apache_vhost
+  notify: Reload Apache
+
+- name: install additionnal modules if any
+  yum: pkg={{item}} state=installed
+  with_items: module_list
+  register: apache_conf
+  when: module_list is defined
+  notify: Restart Apache
+
+- name: enable https
+  yum: pkg=mod_ssl state=installed 
+  when: apache_https is defined and apache_https == "True"
+  tags: https
+
+- name: create directory for ssl certificate
+  file: path="/etc/httpd/ssl" mode=0400 recurse=yes state=directory
+  when: apache_https is defined and apache_https == "True"
+  tags: https
+
+- name: ensure that apache is enable on boot 
+  service: name=httpd enabled=yes
+
+- name: start apache when first installation
+  service: name=httpd state=started
+  when: apache_install.changed
+
+- name: copy template of logrotate
+  template: src=logrotate_apache2.j2 dest=/etc/logrotate.d/{{apache_server_name}}
+  when: apache_server_name is defined
+
+- name: Create directory for logs
+  file: path={{deploy_path}}/logs/apache2 state=directory mode=755 owner="apache"
+
+#Don't work
+#- name: check syntax before restart
+#  shell: apachectl -t
+#  register: result
+#  changed_when: "result.rc != 0"
+#  #always_run: yes
+#  notify: 
+#   - Restart Apache
+#  when: apache_conf.changed
+#
+#- name: check syntax before reload 
+#  shell: apachectl -t
+#  register: result
+#  changed_when: "result.rc != 0"
+#  #always_run: yes
+#  notify: 
+#   - Reload Apache
+#  when: apache_vhost.changed
+#
+

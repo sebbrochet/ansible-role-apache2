@@ -1,0 +1,31 @@
+Requirements
+
+None.
+
+Role Variables: 
+
+Available variables are listed below, along with default values for tasks (see defaults/main.yml):
+
+
+
+- apache_timeout: Number of seconds before receives and sends time out, default value '60'
+
+- apache_keepalive: Enable or disable keepalive, default value 'On' 
+
+- apache_max_ka_request: Maximum number of request to allow , default value '100'
+
+- apache_ka_timeout: Number of seonds to wait for the next request from the same client, default value '5'
+
+- mpm_mode: setting  apache mode (prefork or worker)  
+
+- apache_listen: Apache listen specific Address, default value '0.0.0.0'
+
+- apache_port: Apache listen specifi port, default value '80'
+
+- server_status_ip_list: List IP that allow to check server-status, if you enable ip list you enable mod_status 
+
+- apache_https: enable https
+
+- apache_logrotate_rotation: set logrotation interval : daily, weekly , etc . Default value daily
+- apache_logrotate_count: set count for log files are rotated count times before being removed or mailed to the address specified in a mail directive. If count is 0, old versions are removed rather than rotated. Default value: 30  
+

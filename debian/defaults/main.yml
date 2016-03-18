@@ -1,0 +1,6 @@
+---
+
+update_apache_conf: 'True'
+apache_config_file: 'apache2.conf'
+apache_mod_status: 'False'
+deploy_path: '/home'

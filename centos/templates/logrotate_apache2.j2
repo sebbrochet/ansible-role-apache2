@@ -1,0 +1,21 @@
+#{{ ansible_managed }}
+
+{{ deploy_path | default ("/home") }}/logs/apache2/{{apache_server_name}}*.log {
+        {{ apache_logrotate_rotation_interval | default ("daily") }}
+        missingok
+        rotate {{ apache_logrotate_count | default ("30") }}
+        compress
+        delaycompress
+        notifempty
+        create 640 root adm
+        sharedscripts
+        postrotate
+                /etc/init.d/apache2 reload > /dev/null
+        endscript
+        prerotate
+                if [ -d /etc/logrotate.d/httpd-prerotate ]; then \
+                        run-parts /etc/logrotate.d/httpd-prerotate; \
+                fi; \
+        endscript
+}
+

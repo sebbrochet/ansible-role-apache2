@@ -1,0 +1,3 @@
+dependencies:
+  - { role: apache2/debian, when: "ansible_os_family == 'Debian'" }
+  - { role: apache2/centos, when: "ansible_os_family == 'RedHat'" } 
